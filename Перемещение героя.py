@@ -104,25 +104,30 @@ class Player(pygame.sprite.Sprite):
 def move(hero, movement):
     x, y = hero.pos
     if movement == pygame.K_UP:
-        if board.height > y > 0 and board.board[y - 1][x] == '.':
-            hero.move(x, y - 1)
+        if board.height > y > 0:
+            if board.board[y - 1][x] == '.':
+                hero.move(x, y - 1)
         elif board.board[-1][x] == '.':
             hero.move(x, board.height - 1)
             board.top -= board.cell_size * board.height
     if movement == pygame.K_DOWN:
-        if 0 <= y < board.height - 1 and board.board[y + 1][x] == '.':
-            hero.move(x, y + 1)
+        if 0 <= y < board.height - 1:
+            if board.board[y + 1][x] == '.':
+                hero.move(x, y + 1)
         elif board.board[0][x] == '.':
             hero.move(x, 0)
             board.top += board.cell_size * board.height
     if movement == pygame.K_LEFT:
-        if x > 0 and board.board[y][x - 1] == '.':
-            hero.move(x - 1, y)
+        if x > 0:
+            if board.board[y][x - 1] == '.':
+                hero.move(x - 1, y)
         elif board.board[y][-1] == '.':
             hero.move(board.width - 1, y)
+            board.left -= board.cell_size * board.width
     if movement == pygame.K_RIGHT:
-        if x < len(board.board) and board.board[y][x + 1] == '.':
-            hero.move(x + 1, y)
+        if x < len(board.board):
+            if board.board[y][x + 1] == '.':
+                hero.move(x + 1, y)
         elif board.board[y][0] == '.':
             hero.move(0, y)
             board.left += board.cell_size * board.width
@@ -132,21 +137,13 @@ def change_camera_pos():
     res = player.pos[0] * board.cell_size + board.left - width / 2
     if res > 10:
         board.left -= res / 50
-        if board.left > board.cell_size * board.width + width:
-            board.left = 0
     elif res < -10:
         board.left -= res / 50
-        if board.left < -width:
-            board.left = -(board.cell_size * board.width - width)
     res = player.pos[1] * board.cell_size + board.top - height / 2
     if res > 10:
         board.top -= res / 50
-        if board.top > board.cell_size * board.height + height:
-            board.top = 0
     elif res < -10:
         board.top -= res / 50
-        if board.top < -height:
-            board.top = -(board.cell_size * board.height - height)
 
 
 def draw():
