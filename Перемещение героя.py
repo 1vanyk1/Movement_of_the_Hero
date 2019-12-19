@@ -79,15 +79,15 @@ class Board:
 
 
 def open_file(filename):
-    filename = 'data/' + filename
+    filename = 'data/levels/' + filename
     with open(filename, 'r') as mapfile:
         level_map = [line.strip() for line in mapfile]
     max_level = max(map(len, level_map))
-    return [list(i.rjust(max_level, '.')) for i in level_map]
+    return [list(i.ljust(max_level, '.')) for i in level_map]
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos_x, pos_y):
+    def __init__(self, pos_y, pos_x):
         super().__init__()
         self.image = player_image
         self.pos = (pos_x, pos_y)
@@ -104,10 +104,10 @@ class Player(pygame.sprite.Sprite):
 def move(hero, movement):
     x, y = hero.pos
     if movement == pygame.K_UP:
-        if y > 0 and board.board[y - 1][x] == '.':
+        if board.height > y > 0 and board.board[y - 1][x] == '.':
             hero.move(x, y - 1)
     if movement == pygame.K_DOWN:
-        if y < len(board.board) and board.board[y + 1][x] == '.':
+        if 0 <= y < board.height - 1 and board.board[y + 1][x] == '.':
             hero.move(x, y + 1)
     if movement == pygame.K_LEFT:
         if x > 0 and board.board[y][x - 1] == '.':
@@ -122,41 +122,61 @@ def change_camera_pos():
     if res > 10:
         if board.cell_size * board.width + board.left > width + 1:
             board.left -= res / 50
+        else:
+            board.left = -(board.cell_size * board.width - width)
     elif res < -10:
-        if board.left < 0:
+        if board.left < -1:
             board.left -= res / 50
+        else:
+            board.left = 0
     res = player.pos[1] * board.cell_size + board.top - height / 2
     if res > 10:
         if board.cell_size * board.height + board.top > height + 1:
             board.top -= res / 50
+        else:
+            board.top = -(board.cell_size * board.height - height)
     elif res < -10:
-        if board.top < 0:
+        if board.top < -1:
             board.top -= res / 50
+        else:
+            board.top = 0
 
 
 def draw():
-    font = pygame.font.Font(None, 50)
-    text = font.render("НАЧАТЬ ИГРУ", 1, (100, 255, 100))
-    text_x = width // 2 - text.get_width() // 2
-    text_y = sprite.rect.y + height // 2 - text.get_height() // 2
-    pygame.draw.rect(screen, (0, 0, 0), (70, sprite.rect.y + 125, 260, 50), 0)
-    screen.blit(text, (text_x, text_y))
+    if if_started:
+        return None
+    files = os.listdir(os.path.abspath('data/levels'))
+    c = 0
+    files_of_levels.clear()
+    for i in files:
+        files_of_levels.append(i)
+        font = pygame.font.Font(None, 50)
+        text = font.render(i[:-4], 1, (100, 255, 100))
+        text_x = width // 2 - text.get_width() // 2
+        text_y = sprite.rect.y + 35 + c * 60 - buttons_y
+        pygame.draw.rect(screen, (0, 0, 0), (50, sprite.rect.y + 25 + c * 60 - buttons_y, 300, 50), 0)
+        screen.blit(text, (text_x, text_y))
+        c += 1
+
+
+buttons_y = 0
 
 
 running = True
 
 all_sprites = pygame.sprite.Group()
 sprite = pygame.sprite.Sprite()
-sprite.image = load_image("fon.jpg")
+sprite.image = pygame.transform.scale(load_image("fon.jpg"), (width, height))
 sprite.rect = sprite.image.get_rect()
 all_sprites.add(sprite)
 sprite.rect.x = -(sprite.rect.width - width) / 2
-sprite.rect.y = -50
+sprite.rect.y = 0
 
 board = Board(4, 3)
 player = board.set_board(open_file('level.txt'))
 board.set_view(0, 0, 50)
 
+files_of_levels = []
 game_start = False
 if_started = False
 
@@ -168,8 +188,17 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if 70 <= event.pos[0] <= 330 and sprite.rect.y + 125 <= event.pos[1] <= sprite.rect.y + 175:
+            if event.button == 1 and 50 <= event.pos[0] <= 350 and \
+                    sprite.rect.y + 25 - buttons_y <= event.pos[1] <= \
+                    sprite.rect.y + len(files_of_levels) * 60 + 15 - buttons_y:
+                num = files_of_levels[(event.pos[1] - sprite.rect.y - 25 + buttons_y) // 60]
+                player = board.set_board(open_file(num))
+                board.set_view(0, 0, 50)
                 if_started = True
+            elif event.button == 4 and buttons_y > 0:
+                buttons_y -= 10
+            elif event.button == 5 and buttons_y < len(files_of_levels) * 60 - height + 40:
+                buttons_y += 10
         if event.type == MYEVENTTYPE:
             change_camera_pos()
             if if_started:
