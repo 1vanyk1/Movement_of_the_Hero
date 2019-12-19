@@ -37,9 +37,9 @@ class Board:
         self.cell_size = cell_size
 
     def render(self):
-        for i in range(self.width):
-            for j in range(self.height):
-                image = load_image(tile_images[self.board[j][i]])
+        for i in range(-int(self.left // 50 + 1), -int(self.left // 50 - width // 50)):
+            for j in range(-int(self.top // 50 + 1), -int(self.top // 50 - height // 50)):
+                image = load_image(tile_images[self.board[j % self.height][i % self.width]])
                 rect = image.get_rect().move(self.left + self.cell_size * i, self.top + self.cell_size * j)
                 screen.blit(image, rect)
 
@@ -106,40 +106,47 @@ def move(hero, movement):
     if movement == pygame.K_UP:
         if board.height > y > 0 and board.board[y - 1][x] == '.':
             hero.move(x, y - 1)
+        elif board.board[-1][x] == '.':
+            hero.move(x, board.height - 1)
+            board.top -= board.cell_size * board.height
     if movement == pygame.K_DOWN:
         if 0 <= y < board.height - 1 and board.board[y + 1][x] == '.':
             hero.move(x, y + 1)
+        elif board.board[0][x] == '.':
+            hero.move(x, 0)
+            board.top += board.cell_size * board.height
     if movement == pygame.K_LEFT:
         if x > 0 and board.board[y][x - 1] == '.':
             hero.move(x - 1, y)
+        elif board.board[y][-1] == '.':
+            hero.move(board.width - 1, y)
     if movement == pygame.K_RIGHT:
         if x < len(board.board) and board.board[y][x + 1] == '.':
             hero.move(x + 1, y)
+        elif board.board[y][0] == '.':
+            hero.move(0, y)
+            board.left += board.cell_size * board.width
 
 
 def change_camera_pos():
     res = player.pos[0] * board.cell_size + board.left - width / 2
     if res > 10:
-        if board.cell_size * board.width + board.left > width + 1:
-            board.left -= res / 50
-        else:
-            board.left = -(board.cell_size * board.width - width)
-    elif res < -10:
-        if board.left < -1:
-            board.left -= res / 50
-        else:
+        board.left -= res / 50
+        if board.left > board.cell_size * board.width + width:
             board.left = 0
+    elif res < -10:
+        board.left -= res / 50
+        if board.left < -width:
+            board.left = -(board.cell_size * board.width - width)
     res = player.pos[1] * board.cell_size + board.top - height / 2
     if res > 10:
-        if board.cell_size * board.height + board.top > height + 1:
-            board.top -= res / 50
-        else:
-            board.top = -(board.cell_size * board.height - height)
-    elif res < -10:
-        if board.top < -1:
-            board.top -= res / 50
-        else:
+        board.top -= res / 50
+        if board.top > board.cell_size * board.height + height:
             board.top = 0
+    elif res < -10:
+        board.top -= res / 50
+        if board.top < -height:
+            board.top = -(board.cell_size * board.height - height)
 
 
 def draw():
@@ -160,8 +167,6 @@ def draw():
 
 
 buttons_y = 0
-
-
 running = True
 
 all_sprites = pygame.sprite.Group()
@@ -169,7 +174,7 @@ sprite = pygame.sprite.Sprite()
 sprite.image = pygame.transform.scale(load_image("fon.jpg"), (width, height))
 sprite.rect = sprite.image.get_rect()
 all_sprites.add(sprite)
-sprite.rect.x = -(sprite.rect.width - width) / 2
+sprite.rect.x = int(-(sprite.rect.width - width) / 2)
 sprite.rect.y = 0
 
 board = Board(4, 3)
